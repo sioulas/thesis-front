@@ -1,0 +1,14 @@
+// app global css in SCSS form
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  background-color: rgb(17, 17, 17) !important;
+  color: rgba(255, 255, 255, 0.822) !important;
+  width: max-content !important;
+}
+
+.leaflet-popup-content {
+  width: max-content !important;
+}
