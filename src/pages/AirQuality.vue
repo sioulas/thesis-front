@@ -4,7 +4,7 @@
       <q-btn
         round
         flat
-        icon="mdi-arrow-expand-left"
+        icon="mdi-arrow-left"
         class="text-xl text-center mr-10"
         @click="previousPollutant"
         :disable="selectedIndex === 0"
@@ -59,7 +59,7 @@
     round
     dense
     flat
-    icon="mdi-arrow-expand-right"
+    icon="mdi-arrow-right"
     class="text-xl text-center ml-10"
     @click="nextPollutant"
     :disable="selectedIndex === rows.length - 1"

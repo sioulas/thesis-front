@@ -1,68 +1,81 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
 import { api } from 'boot/axios'
 import { Pollution, PollutionGeoJSON } from 'src/models/Pollution'
+import { Forecast } from 'src/models/Forecast'
 
-export const useMeasurementsStore = defineStore('measurements', () => {
-  const measurements = ref<Pollution[]>([])
-  const regions = ref<string[]>()
-  const pollutants = ref<string[]>()
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+export const useMeasurementsStore = defineStore('measurements', {
+  state: () => ({
+    forecastData: {
+      data: [] as Forecast[],
+      loading: false
+    },
+    measurements: [] as Pollution[],
+    regions: [] as string[],
+    pollutants: [] as string[],
+    loading: false,
+    error: null as string | null
+  }),
 
-  async function fetchMeasurements() {
-    loading.value = true
-    error.value = null
+  actions: {
+    async fetchForecast(params: { region: string; date: string; pollutant?: string[] | undefined }) {
+      try {
+        this.forecastData.loading = true
+        const response = await api.get('/forecast', {
+          params: {
+            region: params.region,
+            date: params.date,
+            pollutant: params.pollutant // backend should accept list for multiple
+          }
+        })
+        this.forecastData.data = response.data
+      } catch (err) {
+        console.error('Error fetching forecast', err)
+      } finally {
+        this.forecastData.loading = false
+      }
+    },
 
-    try {
-      const { data } = await api.get<PollutionGeoJSON>('/air-quality')
-      measurements.value = data.features
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      error.value = err.message || 'Failed to fetch measurements'
-    } finally {
-      loading.value = false
+    async fetchMeasurements() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const { data } = await api.get<PollutionGeoJSON>('/air-quality')
+        this.measurements = data.features
+      } catch (err: any) {
+        this.error = err.message || 'Failed to fetch measurements'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchRegions() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const { data } = await api.get<{ regions: string[] }>('/regions')
+        this.regions = data.regions
+      } catch (err: any) {
+        this.error = err.message || 'Failed to fetch regions'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchPollutants() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const { data } = await api.get<{ pollutants: string[] }>('/pollutants')
+        this.pollutants = data.pollutants
+      } catch (err: any) {
+        this.error = err.message || 'Failed to fetch pollutants'
+      } finally {
+        this.loading = false
+      }
     }
-  }
-
-  async function fetchRegions() {
-    loading.value = true
-    error.value = null
-
-    try {
-      const { data } = await api.get<{ regions: string[] }>('/regions')
-      regions.value = data.regions
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      error.value = err.message || 'Failed to fetch regions'
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function fetchPollutants() {
-    loading.value = true
-    error.value = null
-
-    try {
-      const { data } = await api.get<{ pollutants: string[] }>('/pollutants')
-      pollutants.value = data.pollutants
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      error.value = err.message || 'Failed to fetch pollutants'
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return {
-    measurements,
-    regions,
-    pollutants ,
-    loading,
-    error,
-    fetchMeasurements,
-    fetchRegions,
-    fetchPollutants
   }
 })

@@ -2,7 +2,7 @@
   <q-layout view="hHh Lpr lff">
     <q-header elevated>
       <q-toolbar
-        class="bg-backgroundDark !shadow-none p-1 border-b">
+        class="bg-backgroundDark !shadow-none p-1">
         <q-btn
           flat
           dense

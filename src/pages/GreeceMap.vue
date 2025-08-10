@@ -1,8 +1,8 @@
 <template>
   <PageContainer class="bg-backgroundDark">
     <div class="row full-height">
-      <q-card class="bg-backgroundDark q-pa-md border-r" style="width: 20rem">
-        <div class="text-h6 text-white mb-4 border-b border-gray-500 pb-2">
+      <q-card class="bg-backgroundDark p-4 shadow-none border-r border-zinc-800 " style="width: 20rem">
+        <div class="text-h6 text-white mb-4 border-b border-zinc-700 pb-2">
           Map Filtering
         </div>
         <q-form @submit.prevent="onSubmit" ref="filterForm" class="grid grid-cols-1 gap-3">
@@ -11,9 +11,9 @@
             :options="regions"
             label="Region"
             label-color="black"
+            class="region-select"
             dense
             borderless
-            bg-color="white"
             emit-value
             map-options
             lazy-rules
@@ -25,8 +25,8 @@
             label="Date"
             dense
             label-color="black"
+            class="date-input"
             borderless
-            bg-color="white"
             lazy-rules
             :rules="[val => !!val || 'Date is required']"
           >
@@ -48,7 +48,7 @@
             :options="pollutants"
             label="Pollutant"
             label-color="black"
-            bg-color="white"
+            class="pollutant-select"
             multiple
             dense
             borderless
@@ -76,6 +76,7 @@
 <script setup lang="ts">
 import L from 'leaflet'
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { api } from 'boot/axios'
 import { Feature, Point } from 'geojson'
 import { useMeasurementsStore } from 'src/stores/pollution-store'
@@ -84,6 +85,9 @@ import { QForm } from 'quasar'
 import PageContainer from 'src/components/PageContainer.vue'
 
 const measurementStore = useMeasurementsStore()
+
+const router = useRouter()
+
 const regions = computed(() => measurementStore.regions)
 const pollutants = computed(() => measurementStore.pollutants)
 
@@ -136,32 +140,32 @@ function getColorByPollutant(pollutant: string, concentration: number): string {
 
 async function loadData() {
   if (!region.value || !date.value) {
-    notify({ message: 'Region or Date fields are missing. Request failed.', color: 'negative'})
+    notify({ message: 'Region or Date fields are missing. Request failed.', color: 'negative' })
     return
   }
 
   try {
     const { data } = await api.get('/air-quality', {
-  params: {
-    region: region.value,
-    date: date.value,
-    ...(pollutant.value.length > 0 && {
-      pollutant: pollutant.value
-    })
-  },
-  paramsSerializer: params => {
-    const searchParams = new URLSearchParams()
-    for (const key in params) {
-      const value = params[key]
-      if (Array.isArray(value)) {
-        value.forEach(v => searchParams.append(key, v))
-      } else {
-        searchParams.append(key, value)
+      params: {
+        region: region.value,
+        date: date.value,
+        ...(pollutant.value.length > 0 && {
+          pollutant: pollutant.value
+        })
+      },
+      paramsSerializer: params => {
+        const searchParams = new URLSearchParams()
+        for (const key in params) {
+          const value = params[key]
+          if (Array.isArray(value)) {
+            value.forEach(v => searchParams.append(key, v))
+          } else {
+            searchParams.append(key, value)
+          }
+        }
+        return searchParams.toString()
       }
-    }
-    return searchParams.toString()
-  }
-})
+    })
 
     if (markerLayer) {
       map.removeLayer(markerLayer)
@@ -186,90 +190,100 @@ async function loadData() {
         const propertiesList = groupedData.get(key)
 
         const popupContent = `
-  <div style="
-    font-family: sans-serif;
-    padding: 1rem 1.2rem;
-  ">
-    <div style="
-      margin: 0 0 0.75rem;
-      font-size: 1.3rem;
-      font-weight: 700;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.5rem;
-    ">
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="#ecf0f1"
-          height="20"
-          viewBox="0 0 24 24"
-          width="20"
-        >
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM12 11.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-        </svg>
-        ${propertiesList![0].region}
-      </div>
-      <div
-        href="/air-quality"
-        title="Detail analysis for each pollutant."
-        class="region-details-button"
-        style="
-          background: #0D5EA6;
-          color: white;
-          font-size: 0.75rem;
-          padding: 0.25rem 0.5rem;
-          border-radius: 4px;
-          text-decoration: none;
-          transition: background 0.3s;
-        "
-        target="_blank"
-      >
-        Pollutant analysis
-      </a>
-    </div>
-    <table style="
-      width: max-content;
-      font-size: 0.9rem;
-      padding: 1rem;
-      border-collapse: collapse;
-      border: 1px solid #0D5EA6;
-    ">
-      <thead>
-        <tr style="
-          text-align: left;
-          border-bottom: 2px solid #0D5EA6;
-        ">
-          <th style="padding: 0.3rem 0.5rem;">Pollutant</th>
-          <th style="padding: 0.3rem 0.5rem;">Conc.</th>
-          <th style="padding: 0.3rem 0.5rem;">Date</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${propertiesList!
-          .map(p => {
-            if (pollutant.value.length && !pollutant.value.includes(p.pollutant)) return ''
+          <div style="
+            font-family: sans-serif;
+            padding: 1rem 1.2rem;
+          ">
 
-            const color = getColorByPollutant(p.pollutant, Number(p.concentration))
-            return `
-              <tr>
-                <td style="padding: 0.3rem 0.5rem;">${p.pollutant}</td>
-                <td style="color: ${color}; font-weight: bold; padding: 0.3rem 0.5rem;">${p.concentration}</td>
-                <td style="padding: 0.3rem 0.5rem;">${p.date}</td>
-              </tr>
-            `
-          })
-          .join('')}
-      </tbody>
-    </table>
-  </div>
-`
+            <div style="
+              margin: 0 0 0.75rem;
+              font-size: 1.3rem;
+              font-weight: 700;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              gap: 0.5rem;
+            ">
 
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="#ecf0f1"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  width="20"
+                >
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM12 11.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                ${propertiesList![0].region}
+              </div>
 
+              <button
+                id="popup-pollutant-btn"
+                title="Detail analysis for each pollutant."
+                style="
+                  background: #0D5EA6;
+                  color: white;
+                  font-size: 0.75rem;
+                  padding: 0.25rem 0.5rem;
+                  border-radius: 4px;
+                  border: none;
+                  cursor: pointer;
+                "
+              >
+                Pollutant analysis
+              </button>
+            </div>
 
-return L.marker(latlng).bindPopup(popupContent)
+            <table style="
+              width: max-content;
+              font-size: 0.9rem;
+              padding: 1rem;
+              border-collapse: collapse;
+              border: 1px solid #0D5EA6;
+            ">
+              <thead>
+                <tr style="
+                  text-align: left;
+                  border-bottom: 2px solid #0D5EA6;
+                ">
+                  <th style="padding: 0.3rem 0.5rem;">Pollutant</th>
+                  <th style="padding: 0.3rem 0.5rem;">Conc.</th>
+                  <th style="padding: 0.3rem 0.5rem;">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${propertiesList!
+                  .map(p => {
+                    if (pollutant.value.length && !pollutant.value.includes(p.pollutant)) return ''
 
+                    const color = getColorByPollutant(p.pollutant, Number(p.concentration))
+                    return `
+                      <tr>
+                        <td style="padding: 0.3rem 0.5rem;">${p.pollutant}</td>
+                        <td style="color: ${color}; font-weight: bold; padding: 0.3rem 0.5rem;">${p.concentration}</td>
+                        <td style="padding: 0.3rem 0.5rem;">${p.date}</td>
+                      </tr>
+                    `
+                  }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `
+
+        const marker = L.marker(latlng).bindPopup(popupContent)
+
+        marker.on('popupopen', () => {
+          const btn = document.getElementById('popup-pollutant-btn')
+          if (btn) {
+            btn.onclick = async () => {
+              // Use Vue router to navigate
+              await router.push({ name: 'Air Quality' }) // Replace with your actual route name
+            }
+          }
+        })
+
+        return marker
       }
     })
 
@@ -300,6 +314,7 @@ return L.marker(latlng).bindPopup(popupContent)
   }
 }
 
+
 const filterForm = ref<QForm | null>(null)
 
 const onSubmit = async () => {
@@ -310,3 +325,21 @@ const onSubmit = async () => {
   }
 }
 </script>
+
+<style>
+/* First style – for q-selects */
+.region-select.q-field--auto-height.q-field--dense .q-field__control,
+.pollutant-select.q-field--auto-height.q-field--dense .q-field__control {
+  background-color: #FBFBFB;
+  border-radius: 4px;
+  padding-left: 0.4rem;
+}
+
+/* Second style – for q-input */
+.date-input.q-field--borderless.q-field--dense .q-field__control {
+  background-color: #FBFBFB;
+  border-radius: 4px;
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+}
+</style>
