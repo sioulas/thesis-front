@@ -13,6 +13,7 @@
             label-color="black"
             class="region-select"
             dense
+            clearable
             borderless
             emit-value
             map-options
@@ -33,7 +34,7 @@
             <template #append>
               <q-icon name="mdi-calendar-range" class="cursor-pointer text-primaryBlue">
                 <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                  <q-date v-model="date" mask="YYYY-MM-DD" dark>
+                  <q-date v-model="date" :options="optionsFn" mask="YYYY-MM-DD" dark>
                     <div class="row items-center justify-end">
                       <q-btn v-close-popup label="Close" class="bg-primaryBlue"/>
                     </div>
@@ -65,8 +66,9 @@
           />
         </q-form>
       </q-card>
-<ForecastChart :forecast="forecastData" />
-
+      <div class="col full-height p-4">
+        <ForecastChart :forecast="forecastData" :historical="pollutionData" class="full-height w-full"/>
+      </div>
     </div>
   </PageContainer>
 </template>
@@ -78,7 +80,6 @@ import { notify } from 'src/utils/notify'
 import { QForm } from 'quasar'
 import PageContainer from 'src/components/PageContainer.vue'
 import ForecastChart from 'src/components/ForecastChart.vue'
-import { Forecast } from 'src/models/Forecast'
 
 const measurementStore = useMeasurementsStore()
 
@@ -89,7 +90,15 @@ const region = ref<string | null>(null)
 const pollutant = ref<string[]>([])
 const date = ref('2025-01-27')
 
-const forecastData = ref<Forecast[]>([])
+const optionsFn = (dateStr: string) => {
+  const date = new Date(dateStr)
+  const min = new Date('2024-12-31')
+  return date >= min
+}
+
+
+const forecastData = computed(() => measurementStore.forecastData.data)
+const pollutionData = computed(() => measurementStore.pollutionData.data)
 
 onMounted(async () => {
   await measurementStore.fetchRegions()
@@ -105,16 +114,26 @@ const onSubmit = async () => {
     return
   }
 
-  await measurementStore.fetchForecast({
+  const params = {
     region: region.value!,
     date: date.value,
     pollutant: pollutant.value.length ? pollutant.value : undefined
+  }
+
+  // Fetch forecast with the selected date
+  await measurementStore.fetchForecast(params)
+
+  // Force date to 2023 for measurements
+  const date2023 = params.date.replace(/^\d{4}/, '2024')
+  await measurementStore.fetchPollution({
+    ...params,
+    date: date2023
   })
 }
+
 </script>
 
 <style>
-/* First style – for q-selects */
 .region-select.q-field--auto-height.q-field--dense .q-field__control,
 .pollutant-select.q-field--auto-height.q-field--dense .q-field__control {
   background-color: #FBFBFB;
@@ -122,7 +141,6 @@ const onSubmit = async () => {
   padding-left: 0.4rem;
 }
 
-/* Second style – for q-input */
 .date-input.q-field--borderless.q-field--dense .q-field__control {
   background-color: #FBFBFB;
   border-radius: 4px;

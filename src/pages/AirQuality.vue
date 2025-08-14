@@ -56,19 +56,18 @@
     </q-card>
 
     <q-btn
-    round
-    dense
-    flat
-    icon="mdi-arrow-right"
-    class="text-xl text-center ml-10"
-    @click="nextPollutant"
-    :disable="selectedIndex === rows.length - 1"
-  />
-</div>
-
+      round
+      dense
+      flat
+      icon="mdi-arrow-right"
+      class="text-xl text-center ml-10"
+      @click="nextPollutant"
+      :disable="selectedIndex === rows.length - 1"
+    />
+  </div>
 
   <q-table
-    title="Pollution Table"
+    title="WHO Guideline Table"
     :rows="rows"
     :columns="columns"
     row-key="pollutant"
@@ -86,10 +85,11 @@
         v-model="search"
         label="Search pollutants..."
         dense
-        borderless
+        dark
+        outlined
         debounce="300"
         clearable
-        class="w-[13rem] bg-gray-200 rounded-sm px-2"
+        class="w-[13rem] rounded-sm px-2"
       >
         <template #append>
           <q-icon name="search" />
@@ -101,20 +101,37 @@
       <q-tr :props="props">
         <q-th v-for="col in props.cols" :key="col.name" :props="props">
           {{ col.label }}
-          <q-tooltip v-if="tooltipMap[col.name]" class="bg-accent text-black">
+          <q-tooltip v-if="tooltipMap[col.name]" class="bg-info text-lightText text-xs">
             {{ tooltipMap[col.name] }}
           </q-tooltip>
         </q-th>
       </q-tr>
     </template>
+
+    <template #body-cell-manual="props">
+      <q-td :props="props">
+        <q-btn
+          dense
+          flat
+          round
+          icon="mdi-book-open-page-variant"
+          class="text-primaryBlue"
+          @click.stop="openManualDialog(props.row.pollutant)"
+        >
+      <q-tooltip>View Help Manual</q-tooltip>
+    </q-btn>
+  </q-td>
+</template>
+
   </q-table>
 </q-page>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { QTableProps } from 'quasar'
+import { Dialog, QTableProps } from 'quasar'
 import { pollutantDescriptions } from 'src/utils/descriptions'
+import HealthManualDialog from 'src/components/dialogs/HealthManualDialog.vue'
 
 const search = ref('')
 
@@ -122,7 +139,15 @@ const pollutantDescription = computed(() =>
   pollutantDescriptions[selectedPollutant.value!.pollutant] || ''
 )
 
+function openManualDialog(name: string) {
+  Dialog.create({
+    component: HealthManualDialog,
+    componentProps: { pollutantName: name }
+  })
+}
+
 const tooltipMap: Record<string, string> = {
+  manual: 'A manual with protective measures for health-risk groups',
   guideline: 'μg/m³ = micrograms per cubic meter',
   period: 'Averaging time for the measurement',
   health: 'Known health effects from exposure',
@@ -135,6 +160,7 @@ const getRowClass = (row: typeof rows[0]) => {
 }
 
 const columns: QTableProps['columns'] = [
+  { name: 'manual', align: 'center', label: 'Protective Measures', field: 'manual'},
   { name: 'pollutant', align: 'center', label: 'Pollutant', field: 'pollutant' },
   { name: 'guideline', align: 'center', label: 'WHO Guideline', field: 'guideline' },
   { name: 'period', align: 'center', label: 'Averaging Period', field: 'period' },

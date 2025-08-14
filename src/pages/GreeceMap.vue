@@ -13,6 +13,7 @@
             label-color="black"
             class="region-select"
             dense
+            clearable
             borderless
             emit-value
             map-options
@@ -50,6 +51,7 @@
             label-color="black"
             class="pollutant-select"
             multiple
+            clearable
             dense
             borderless
             emit-value
@@ -99,12 +101,10 @@ const date = ref('2022-01-01')
 let map: L.Map
 let markerLayer: L.GeoJSON | null = null
 
-//kwstas
-
 const optionsFn = (dateStr: string) => {
   const date = new Date(dateStr)
   const min = new Date('2021-12-31')
-  const max = new Date('2023-12-31')
+  const max = new Date('2024-12-31')
   return date >= min && date <= max
 }
 
@@ -327,7 +327,6 @@ const onSubmit = async () => {
 </script>
 
 <style>
-/* First style – for q-selects */
 .region-select.q-field--auto-height.q-field--dense .q-field__control,
 .pollutant-select.q-field--auto-height.q-field--dense .q-field__control {
   background-color: #FBFBFB;
@@ -335,7 +334,6 @@ const onSubmit = async () => {
   padding-left: 0.4rem;
 }
 
-/* Second style – for q-input */
 .date-input.q-field--borderless.q-field--dense .q-field__control {
   background-color: #FBFBFB;
   border-radius: 4px;

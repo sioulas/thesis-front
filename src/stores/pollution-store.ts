@@ -10,7 +10,14 @@ export const useMeasurementsStore = defineStore('measurements', {
       data: [] as Forecast[],
       loading: false
     },
-    measurements: [] as Pollution[],
+    measurementsData: {
+      data: [] as Pollution[],
+      loading: false
+    },
+    pollutionData: {
+      data: [] as Forecast[],
+      loading: false
+    },
     regions: [] as string[],
     pollutants: [] as string[],
     loading: false,
@@ -36,17 +43,39 @@ export const useMeasurementsStore = defineStore('measurements', {
       }
     },
 
-    async fetchMeasurements() {
-      this.loading = true
-      this.error = null
-
+    async fetchMeasurements(params: { region: string; date: string; pollutant?: string[] | undefined }) {
       try {
-        const { data } = await api.get<PollutionGeoJSON>('/air-quality')
-        this.measurements = data.features
-      } catch (err: any) {
-        this.error = err.message || 'Failed to fetch measurements'
+        this.measurementsData.loading = true
+        const response = await api.get<PollutionGeoJSON>('/air-quality', {
+          params: {
+            region: params.region,
+            date: params.date,
+            pollutant: params.pollutant
+          }
+        })
+        this.measurementsData.data = response.data.features
+      } catch (err) {
+        console.error('Error fetching measurements', err)
       } finally {
-        this.loading = false
+        this.measurementsData.loading = false
+      }
+    },
+
+    async fetchPollution(params: { region: string; date: string; pollutant?: string[] | undefined }) {
+      try {
+        this.pollutionData.loading = true
+        const response = await api.get('/pollution', {
+          params: {
+            region: params.region,
+            date: params.date,
+            pollutant: params.pollutant
+          }
+        })
+        this.pollutionData.data = response.data
+      } catch (err) {
+        console.error('Error fetching forecast', err)
+      } finally {
+        this.pollutionData.loading = false
       }
     },
 

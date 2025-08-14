@@ -37,7 +37,7 @@
       <q-scroll-area class="fit">
           <q-list>
             <template v-for="(drawerItem, index) in drawerItems" :key="index" >
-              <q-item :to="drawerItem.to" active-class="bg-accentBlue" :exact="drawerItem.exact" router clickable>
+              <q-item :to="drawerItem.to" active-class="bg-transparent/20" :exact="drawerItem.exact" router clickable>
                 <q-item-section avatar>
                   <q-icon :name="drawerItem.icon" />
                 </q-item-section>
@@ -91,21 +91,21 @@ const drawerItems = [
   },
   {
     icon: 'mdi-map-search',
-    label: 'Map',
+    label: 'Air Quality Map',
     to: '/greece-map',
     exact: false,
     separator: false
   },
   {
     icon: 'mdi-air-filter',
-    label: 'Air Quality',
+    label: 'Air Quality Guideline',
     to: '/air-quality',
     exact: false,
     separator: true
   },
   {
     icon: 'mdi-cloud-arrow-right',
-    label: 'Future Predictions',
+    label: 'Forecast Chart',
     to: '/future-predictions',
     exact: false,
     separator: false
